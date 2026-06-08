@@ -198,7 +198,7 @@ def plot_ekman_hodograph():
     # 绘制海面风矢量 (红色箭头)
     ax_2d.plot([0, w_u], [0, w_v], 'r-', linewidth=1, zorder=5)
     ax_2d.scatter(w_u, w_v, c='red', s=80, marker='.', zorder=6)
-    ax_2d.text(w_u*0.8-0.05 , w_v*0.8 , f'风\n{ws}m/s', color='red', fontsize=8, ha='right', va='bottom', zorder=6)
+    ax_2d.text(w_u*1.1 , w_v*1.1 , f'风\n{ws}m/s', color='red', fontsize=8, ha='center', va='bottom', zorder=6)
     
     # 坐标轴设置
     ax_2d.set_xlim([-vel_limit, vel_limit])

@@ -9,24 +9,23 @@ import matplotlib.font_manager as fm
 # 页面基础设置
 # ==========================================
 st.set_page_config(page_title="Ekman 螺旋", layout="wide")
-font_url = "https://github.com/StellarCN/scp_zh/raw/master/fonts/SimHei.ttf"
-font_path = "SimHei.ttf"
 
-# 如果本地没有这个字体文件，则从网络下载
-if not os.path.exists(font_path):
-    try:
-        urllib.request.urlretrieve(font_url, font_path)
-    except Exception:
-        pass # 如果下载失败，则回退到默认设置
+font_path = "微软雅黑.ttc"
 
-# 强制 Matplotlib 使用下载的中文字体
 if os.path.exists(font_path):
-    plt.rcParams['font.sans-serif'] = [font_path]
+    # 1. 将字体文件注册到 Matplotlib 的字体管理器中
+    fm.fontManager.addfont(font_path)
+    # 2. 获取该字体的内部真实名称 (例如 'SimHei')
+    font_name = fm.FontProperties(fname=font_path).get_name()
+    # 3. 全局设置使用该字体
+    plt.rcParams['font.sans-serif'] = [font_name]
+    plt.rcParams['axes.unicode_minus'] = False
+    st.success("✅ 成功加载仓库中的字体文件，中文将完美显示！")
 else:
-    # 备用列表
-    plt.rcParams['font.sans-serif'] = ['Microsoft YaHei','WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
-
-plt.rcParams['axes.unicode_minus'] = False # 正常显示负号
+    # 降级方案：如果没找到文件，尝试使用系统可能存在的默认中文字体
+    plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
+    plt.rcParams['axes.unicode_minus'] = False
+    st.warning("⚠️ 未找到 微软雅黑.ttf 文件，请确保已将其上传至 GitHub 仓库根目录，且文件名大小写完全一致。")
 # plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
 # plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
 # plt.rcParams['axes.unicode_minus'] = False

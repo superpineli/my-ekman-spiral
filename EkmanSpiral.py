@@ -1,14 +1,35 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import urllib.request
+import os
+import matplotlib.font_manager as fm
 
 # ==========================================
 # 页面基础设置
 # ==========================================
 st.set_page_config(page_title="Ekman 螺旋", layout="wide")
+font_url = "https://github.com/StellarCN/scp_zh/raw/master/fonts/SimHei.ttf"
+font_path = "SimHei.ttf"
+
+# 如果本地没有这个字体文件，则从网络下载
+if not os.path.exists(font_path):
+    try:
+        urllib.request.urlretrieve(font_url, font_path)
+    except Exception:
+        pass # 如果下载失败，则回退到默认设置
+
+# 强制 Matplotlib 使用下载的中文字体
+if os.path.exists(font_path):
+    plt.rcParams['font.sans-serif'] = [font_path]
+else:
+    # 备用列表
+    plt.rcParams['font.sans-serif'] = ['Microsoft YaHei','WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
+
+plt.rcParams['axes.unicode_minus'] = False # 正常显示负号
 # plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
-plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
+# plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
+# plt.rcParams['axes.unicode_minus'] = False
 
 # st.title("让公式活起来之——无限深海Ekman 漂流理论可视化")
 st.markdown(

@@ -20,12 +20,12 @@ if os.path.exists(font_path):
     # 3. 全局设置使用该字体
     plt.rcParams['font.sans-serif'] = [font_name]
     plt.rcParams['axes.unicode_minus'] = False
-    st.success("✅ 成功加载仓库中的字体文件，中文将完美显示！")
+#    st.success("✅ 成功加载仓库中的字体文件，中文将完美显示！")
 else:
     # 降级方案：如果没找到文件，尝试使用系统可能存在的默认中文字体
     plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
     plt.rcParams['axes.unicode_minus'] = False
-    st.warning("⚠️ 未找到 微软雅黑.ttf 文件，请确保已将其上传至 GitHub 仓库根目录，且文件名大小写完全一致。")
+#    st.warning("⚠️ 未找到 微软雅黑.ttf 文件，请确保已将其上传至 GitHub 仓库根目录，且文件名大小写完全一致。")
 # plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
 # plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
 # plt.rcParams['axes.unicode_minus'] = False

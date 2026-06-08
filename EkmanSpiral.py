@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 # 页面基础设置
 # ==========================================
 st.set_page_config(page_title="Ekman 螺旋", layout="wide")
-plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
+# plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
+plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 
 # st.title("让公式活起来之——无限深海Ekman 漂流理论可视化")

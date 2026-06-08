@@ -2,3 +2,5 @@ numpy
 matplotlib
 scipy
 streamlit
+urllib
+os

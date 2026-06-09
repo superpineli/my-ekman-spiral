@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-S方程消消乐</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh; padding: 12px; color: #1e293b;
+        }
+        .game-container { max-width: 600px; margin: 0 auto; }
+        .header {
+            background: #ffffff; border-radius: 16px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap; gap: 10px; border: 1px solid #e2e8f0;
+        }
+        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #475569; }
+        .stat-value { color: #0f172a; font-weight: 700; font-size: 15px; }
+        
+        #startOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            z-index: 3000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white; transition: opacity 0.3s; padding: 20px;
+        }
+        #startOverlay h1 { font-size: 32px; margin-bottom: 30px; color: #38bdf8; text-align: center; }
+        .input-group { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 300px; }
+        #playerNameInput {
+            width: 100%; padding: 14px 20px; font-size: 16px; border-radius: 25px; border: 2px solid #334155;
+            background: rgba(255,255,255,0.1); color: white; outline: none; text-align: center;
+        }
+        #playerNameInput::placeholder { color: #94a3b8; }
+        #playerNameInput:focus { border-color: #38bdf8; background: rgba(255,255,255,0.15); }
+        #startBtn {
+            width: 100%; padding: 14px; font-size: 18px; border-radius: 25px; border: none;
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4); font-weight: 600;
+        }
+
+        .countdown-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.85);
+            z-index: 2000; align-items: center; justify-content: center;
+        }
+        .countdown-overlay.show { display: flex; }
+        .countdown-number {
+            font-size: 120px; font-weight: 800; color: #ffffff; text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+        }
+        .countdown-number.go { color: #fbbf24; text-shadow: 0 0 40px rgba(251, 191, 36, 1); font-size: 100px; }
+        @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .cards-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+        .card {
+            background: #ffffff; border-radius: 14px; padding: 20px 12px; text-align: center; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); transition: all 0.25s ease;
+            min-height: 80px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 600; color: #334155; border: 3px solid transparent;
+        }
+        .card:active { transform: scale(0.97); }
+        .formula-card { background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
+		.formula-card .katex { font-size: 1.5em; }
+        .meaning-card { background: #fef3c7; border-color: #fcd34d; color: #92400e; font-size: 1.2em; }
+        .card.selected {
+            border-color: #9333ea !important; background: #f3e8ff !important; color: #6b21a8 !important;
+            transform: scale(1.04); box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2); z-index: 2;
+        }
+        .card.matched { opacity: 0; transform: scale(0.5); pointer-events: none; }
+        .card.error {
+            border-color: #ef4444 !important; background: #fee2e2 !important; color: #991b1b !important;
+            animation: shake 0.4s;
+        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        
+        .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 12px 28px;
+            border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-secondary { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+        
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white; border-radius: 20px; padding: 30px; max-width: 380px; width: 100%; text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2); animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 15px; color: #0f172a; }
+        .modal-stats { margin: 20px 0; padding: 16px; background: #f8fafc; border-radius: 12px; }
+        .modal-stat { display: flex; justify-content: space-between; margin: 10px 0; font-size: 15px; color: #475569; }
+        .modal-stat span:last-child { font-weight: 700; color: #0f172a; }
+        .stars { font-size: 36px; margin: 15px 0; }
+        .instruction {
+            background: #ffffff; border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: center;
+            font-size: 13px; color: #64748b; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="startOverlay">
+        <h1>🌊 N-S方程消消乐</h1>
+        <div class="input-group">
+            <input type="text" id="playerNameInput" placeholder="请输入您的昵称" maxlength="10">
+            <button id="startBtn">开始挑战</button>
+        </div>
+    </div>
+
+    <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-number" id="countdownNumber">3</div>
+    </div>
+
+    <div class="game-container" id="gameContainer" style="display: none;">
+        <div class="header">
+            <div class="stat-item"><span>⏱️ 用时:</span><span class="stat-value" id="timer">00:00</span></div>
+            <div class="stat-item"><span>⭐ 得分:</span><span class="stat-value" id="score">1000</span></div>
+            <div class="stat-item"><span>🎯 配对:</span><span class="stat-value" id="matches">0/8</span></div>
+        </div>
+        <div class="instruction">💡 点击配对蓝色公式卡片和对应的橙黄色卡片</div>
+        <div class="cards-container" id="cardsContainer"></div>
+        <div class="controls">
+            <button class="btn" onclick="game.restart()">🔄 重新开始</button>
+            <button class="btn btn-secondary" onclick="game.showHelp()">❓ 帮助</button>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <div class="modal-title" id="winTitle">🎉 恭喜完成!</div>
+            <div class="stars" id="starsDisplay">⭐⭐⭐</div>
+            <div class="modal-stats">
+                <div class="modal-stat"><span>⏱️ 用时</span><span id="finalTime">00:00</span></div>
+                <div class="modal-stat"><span>⭐ 最终得分</span><span id="finalScore">0</span></div>
+                <div class="modal-stat"><span>🎯 正确率</span><span id="accuracy">100%</span></div>
+            </div>
+            <button class="btn" onclick="game.restart()">再来一次</button>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-title">📖 游戏说明</div>
+            <div style="text-align: left; margin: 20px 0; line-height: 1.8; color: #475569; font-size: 14px;">
+                <p><strong>🎮 游戏规则：</strong></p>
+                <p>1. 点击一个蓝色公式（橙黄色释义）卡片</p>
+                <p>2. 再点击对应的橙黄色释义（蓝色公式）卡片</p>
+                <p>3. 配对成功消除，获得100分</p>
+                <p>4. <b style="color:#ef4444">配对错误扣50分</b>，用时每秒扣2分</p>
+                <br>
+                <p><strong>⭐ 评分标准：</strong></p>
+                <p>⭐⭐⭐⭐⭐ 1600分以上</p>
+                <p>⭐⭐⭐⭐ 1300-1599分</p>
+                <p>⭐⭐⭐ 900-1299分</p>
+                <p>⭐⭐ 600-899分</p>
+                <p>⭐ 600分以下</p>
+            </div>
+            <button class="btn" onclick="document.getElementById('helpModal').classList.remove('show')">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        const gameData = [
+            { id: 1, text: "\\frac{\\partial u}{\\partial t}", pairId: 1, type: "formula" }, 
+            { id: 2, text: "时变加速度项", pairId: 1, type: "meaning" },
+            { id: 3, text: "u\\frac{\\partial u}{\\partial x}", pairId: 2, type: "formula" }, 
+            { id: 4, text: "纬向平流加速度项", pairId: 2, type: "meaning" },
+            { id: 5, text: "fv", pairId: 3, type: "formula" }, 
+            { id: 6, text: "科氏力项1（较大）", pairId: 3, type: "meaning" },
+            { id: 7, text: "-\\frac{1}{\\rho}\\frac{\\partial p}{\\partial x}", pairId: 4, type: "formula" }, 
+            { id: 8, text: "压强梯度力项", pairId: 4, type: "meaning" },
+            { id: 9, text: "A_l \\nabla^2 u", pairId: 5, type: "formula" }, 
+            { id: 10, text: "水平湍摩擦力项", pairId: 5, type: "meaning" },
+            { id: 11, text: "A_z \\frac{\\partial^2 u}{\\partial z^2}", pairId: 6, type: "formula" }, 
+            { id: 12, text: "垂向湍摩擦力项", pairId: 6, type: "meaning" },
+            { id: 13, text: "-f \\cot \\varphi w", pairId: 7, type: "formula" }, 
+            { id: 14, text: "科氏力项2（较小）", pairId: 7, type: "meaning" },
+            { id: 15, text: "v\\frac{\\partial u}{\\partial y}", pairId: 8, type: "formula" }, 
+            { id: 16, text: "经向平流加速度项", pairId: 8, type: "meaning" }
+        ];
+
+        class EkmanGame {
+            constructor() {
+                this.cards = []; this.selectedCards = []; this.matchedPairs = 0;
+                this.score = 1000; this.startTime = null; this.timerInterval = null;
+                this.totalAttempts = 0; this.correctAttempts = 0;
+                this.isPlaying = false; this.isLocked = false; 
+                this.audioContext = null;
+                this.gameStarted = false;
+                this.playerName = '';
+                this.isCountingDown = false;
+                
+                this.initAudio();
+                document.getElementById('startBtn').addEventListener('click', () => this.handleFirstClick());
+                document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleFirstClick();
+                });
+            }
+
+            initAudio() {
+                try { this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+            }
+
+            async handleFirstClick() {
+                const nameInput = document.getElementById('playerNameInput');
+                this.playerName = nameInput.value.trim() || '匿名玩家';
+                
+                const overlay = document.getElementById('startOverlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+                
+                if (this.audioContext) await this.audioContext.resume();
+                this.gameStarted = true;
+                document.getElementById('gameContainer').style.display = 'block';
+                await this.runCountdown();
+                this.startNewGame();
+            }
+
+            playNote(freq, startTime, duration, type = 'sine', volume = 0.3) {
+                if (!this.audioContext || this.audioContext.state !== 'running') return;
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.type = type; osc.frequency.value = freq;
+                osc.connect(gain); gain.connect(this.audioContext.destination);
+                gain.gain.setValueAtTime(volume, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                osc.start(startTime); osc.stop(startTime + duration);
+            }
+
+            playSound(type) {
+                if (!this.audioContext || this.audioContext.state !== 'running') return;
+                const now = this.audioContext.currentTime;
+                if (type === 'tick') this.playNote(880, now, 0.08, 'square', 0.2);
+                else if (type === 'go') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => this.playNote(f, now + i*0.05, 0.15, 'square', 0.3));
+                    this.playNote(1046.50, now + 0.2, 0.4, 'sine', 0.4);
+                }
+                else if (type === 'success') { this.playNote(523.25, now, 0.1); this.playNote(783.99, now+0.1, 0.2); }
+                else if (type === 'error') { this.playNote(200, now, 0.15, 'sawtooth', 0.3); this.playNote(150, now+0.1, 0.2, 'square', 0.2); }
+                else if (type === 'win') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => this.playNote(f, now + i*0.15, 0.3, 'square', 0.3));
+                    this.playNote(1046.50, now + 0.6, 0.6, 'sine', 0.4);
+                }
+            }
+
+            async runCountdown() {
+                if (this.isCountingDown) return;
+                this.isCountingDown = true;
+
+                const overlay = document.getElementById('countdownOverlay');
+                const numEl = document.getElementById('countdownNumber');
+                overlay.classList.add('show');
+                this.isPlaying = false;
+
+                for (let i = 3; i >= 1; i--) {
+                    numEl.textContent = i;
+                    numEl.className = 'countdown-number';
+                    numEl.style.animation = 'none'; void numEl.offsetWidth; numEl.style.animation = 'popIn 0.5s';
+                    this.playSound('tick');
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                numEl.textContent = 'GO!';
+                numEl.className = 'countdown-number go';
+                numEl.style.animation = 'none'; void numEl.offsetWidth; numEl.style.animation = 'popIn 0.5s';
+                this.playSound('go');
+                await new Promise(r => setTimeout(r, 1000));
+                
+                overlay.classList.remove('show');
+                this.isPlaying = true;
+                this.isCountingDown = false;
+            }
+
+            startNewGame() {
+                this.cards = this.shuffleArray([...gameData]);
+                this.selectedCards = []; this.matchedPairs = 0;
+                this.score = 1000; this.totalAttempts = 0; this.correctAttempts = 0;
+                this.startTime = Date.now(); this.isLocked = false;
+                this.renderCards(); this.startTimer(); this.updateUI();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            renderCards() {
+                const container = document.getElementById('cardsContainer');
+                container.innerHTML = '';
+                this.cards.forEach(card => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = `card ${card.type === 'formula' ? 'formula-card' : 'meaning-card'}`;
+                    cardEl.dataset.pairId = card.pairId;
+                    
+                    if (card.type === 'formula') {
+                        try {
+                            katex.render(card.text, cardEl, { throwOnError: false, displayMode: false });
+                        } catch (e) {
+                            cardEl.textContent = card.text;
+                        }
+                    } else {
+                        cardEl.textContent = card.text;
+                    }
+                    
+                    cardEl.onclick = () => this.handleCardClick(cardEl);
+                    container.appendChild(cardEl);
+                });
+            }
+
+            handleCardClick(cardEl) {
+                if (!this.isPlaying || this.isLocked) return;
+                if (cardEl.classList.contains('matched') || cardEl.classList.contains('selected')) return;
+
+                cardEl.classList.add('selected');
+                this.selectedCards.push(cardEl);
+
+                if (this.selectedCards.length === 2) {
+                    this.isLocked = true;
+                    this.totalAttempts++;
+                    setTimeout(() => this.checkMatch(), 300);
+                }
+            }
+
+            checkMatch() {
+                const [card1, card2] = this.selectedCards;
+                if (card1.dataset.pairId === card2.dataset.pairId) {
+                    card1.classList.add('matched'); card2.classList.add('matched');
+                    card1.classList.remove('selected'); card2.classList.remove('selected');
+                    this.playSound('success'); this.correctAttempts++;
+                    this.score += 100; this.matchedPairs++;
+                    this.selectedCards = [];
+                    this.updateUI();
+                    if (this.matchedPairs === 8) setTimeout(() => this.gameWin(), 400);
+                    this.isLocked = false;
+                } else {
+                    card1.classList.add('error'); card2.classList.add('error');
+                    this.playSound('error');
+                    this.score = Math.max(0, this.score - 50);
+                    this.updateUI();
+                    setTimeout(() => {
+                        card1.classList.remove('selected', 'error');
+                        card2.classList.remove('selected', 'error');
+                        this.selectedCards = [];
+                        this.isLocked = false;
+                    }, 600);
+                }
+            }
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const s = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('timer').textContent = `${m}:${s}`;
+                    this.score = Math.max(0, this.score - 2);
+                    this.updateUI();
+                }, 1000);
+            }
+
+            updateUI() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('matches').textContent = `${this.matchedPairs}/8`;
+            }
+
+            gameWin() {
+                clearInterval(this.timerInterval);
+                this.playSound('win');
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const s = (elapsed % 60).toString().padStart(2, '0');
+                const acc = this.totalAttempts > 0 ? Math.round((this.correctAttempts / this.totalAttempts) * 100) : 100;
+                
+                let stars = '⭐';
+                if (this.score >= 1600) stars = '⭐⭐⭐⭐⭐';
+                else if (this.score >= 1300) stars = '⭐⭐⭐⭐';
+                else if (this.score >= 900) stars = '⭐⭐⭐';
+                else if (this.score >= 600) stars = '⭐⭐';
+                
+                document.getElementById('winTitle').textContent = `${this.playerName}，恭喜你完成挑战！`;
+                document.getElementById('finalTime').textContent = `${m}:${s}`;
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('accuracy').textContent = `${acc}%`;
+                document.getElementById('starsDisplay').textContent = stars;
+                document.getElementById('winModal').classList.add('show');
+            }
+
+            async restart() {
+                if (this.isCountingDown) return;
+                clearInterval(this.timerInterval);
+                document.getElementById('winModal').classList.remove('show');
+                document.getElementById('timer').textContent = '00:00';
+                // 取消倒计时，直接开始下一轮
+                this.startNewGame();
+            }
+
+            showHelp() { document.getElementById('helpModal').classList.add('show'); }
+        }
+
+        const game = new EkmanGame();
+    </script>
+</body>
+</html>

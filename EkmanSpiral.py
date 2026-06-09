@@ -223,7 +223,7 @@ fig_3d, fig_2d, f, d, V0, tau, sign_f = plot_ekman_hodograph()
 
 hemisphere_str = "北半球 (向右偏转 45°)" if sign_f > 0 else "南半球 (向左偏转 45°)"
 
-st.markdown("---")
+st.markdown("<hr style='margin: 6px 0;'>", unsafe_allow_html=True)
 st.markdown("### 🌊 当前 Ekman 流场物理参数")
 # 创建两列布局
 col1, col2 = st.columns(2)
